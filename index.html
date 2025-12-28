@@ -1,45 +1,54 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Smart Study Planner</title>
+    <title>Styled Study Planner</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
     <style>
         body {
             font-family: 'Poppins', sans-serif;
             margin: 0;
-            min-height: 100vh;
+            padding: 20px;
             background: linear-gradient(to right, #e3f2fd, #fce4ec);
         }
 
         h2 {
             text-align: center;
             color: #1A237E;
-            margin-top: 20px;
+            margin-bottom: 20px;
         }
 
-        .form-box {
-            margin-left: 40px;
-            margin-top: 30px;
-            color: #37474F;
+        /* Grid layout for inputs */
+        .input-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px 15px;
+            margin-bottom: 20px;
         }
 
-        .form-box select,
-        .form-box input,
-        .form-box button {
-            margin-top: 6px;
+        .input-grid input, 
+        .input-grid select, 
+        .input-grid button {
             padding: 6px;
+            width: 100%;
             font-family: 'Poppins', sans-serif;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .full-width {
+            grid-column: span 4;
         }
 
         table {
-            margin: 40px auto;
+            width: 100%;
             border-collapse: collapse;
+            margin-top: 20px;
             background-color: #ffffff;
         }
 
         th, td {
             border: 1px solid #333;
-            padding: 12px 20px;
+            padding: 10px;
             text-align: center;
         }
 
@@ -48,184 +57,101 @@
             color: #0D47A1;
         }
 
-        button {
-            cursor: pointer;
-        }
-
-        .table-container {
-            margin-bottom: 50px;
-        }
-
-        .delete-btn {
+        button.delete-btn {
             padding: 4px 8px;
             cursor: pointer;
+            background-color: #f44336;
+            color: white;
+            border: none;
+            border-radius: 3px;
         }
 
+        button.delete-btn:hover {
+            background-color: #d32f2f;
+        }
     </style>
 </head>
 <body>
 
 <h2>Smart Study Planner</h2>
 
-<!-- Input Section -->
-<div class="form-box">
-    <p>
-        Table Name:<br>
-        <input type="text" id="tableName" placeholder="e.g., Week 1">
-    </p>
-    <button onclick="createTable()">Create New Table</button>
-</div>
-
-<div class="form-box">
-    <p>
+<div class="input-grid">
+    <div>
         Day:<br>
         <select id="day">
             <option>Monday</option>
             <option>Tuesday</option>
             <option>Wednesday</option>
-            <option>Thursday</option>
-            <option>Friday</option>
-            <option>Saturday</option>
-            <option>Sunday</option>
         </select>
-    </p>
-
-    <p>
+    </div>
+    <div>
         Subject:<br>
         <input type="text" id="subject">
-    </p>
-
-    <p>
+    </div>
+    <div>
         Priority:<br>
         <select id="priority">
             <option>High</option>
             <option>Medium</option>
             <option>Low</option>
         </select>
-    </p>
-
-    <p>
+    </div>
+    <div>
         Time (hours):<br>
         <input type="number" id="time" min="0" placeholder="e.g., 2">
-    </p>
-
-    <button onclick="addRowToSelectedTable()">Add to Selected Table</button>
+    </div>
+    <div class="full-width">
+        <button onclick="addRow()">Add to Table</button>
+    </div>
 </div>
 
-<!-- Container for all tables -->
-<div id="tablesContainer"></div>
+<table id="studyTable">
+    <tr>
+        <th>Day</th>
+        <th>Subject</th>
+        <th>Priority</th>
+        <th>Time (hours)</th>
+        <th>Delete</th>
+    </tr>
+</table>
 
 <script>
-let tablesData = {}; // stores data for all tables
+function addRow() {
+    let day = document.getElementById('day').value;
+    let subject = document.getElementById('subject').value;
+    let priority = document.getElementById('priority').value;
+    let time = document.getElementById('time').value;
 
-// Load tables from localStorage
-window.onload = function() {
-    if (localStorage.getItem('tablesData')) {
-        tablesData = JSON.parse(localStorage.getItem('tablesData'));
-        for (let tName in tablesData) {
-            createTable(tName, false); // load tables without asking for name
-        }
-    }
-}
+    if(!subject || !time) { alert("Enter subject and time"); return; }
 
-// Create a new table
-function createTable(nameInput = null, promptName = true) {
-    let tableName;
-    if (nameInput) tableName = nameInput;
-    else if (promptName) {
-        tableName = document.getElementById("tableName").value.trim();
-        if (!tableName) { alert("Enter table name"); return; }
-    }
-
-    // Add table container
-    let container = document.getElementById("tablesContainer");
-    let div = document.createElement("div");
-    div.className = "table-container";
-    div.id = "container-" + tableName;
-
-    let heading = document.createElement("h3");
-    heading.innerText = tableName;
-    heading.style.textAlign = "center";
-    div.appendChild(heading);
-
-    let table = document.createElement("table");
-    table.id = "table-" + tableName;
-
-    // Table header
-    let header = table.insertRow();
-    ["Day", "Subject", "Priority", "Time (hours)", "Delete"].forEach(h => {
-        let th = document.createElement("th");
-        th.innerText = h;
-        header.appendChild(th);
-    });
-
-    div.appendChild(table);
-    container.appendChild(div);
-
-    // Initialize table data if not exists
-    if (!tablesData[tableName]) tablesData[tableName] = [];
-    saveToLocalStorage();
-
-    // Clear input
-    document.getElementById("tableName").value = "";
-}
-
-// Add row to selected table
-function addRowToSelectedTable() {
-    let day = document.getElementById("day").value;
-    let subject = document.getElementById("subject").value;
-    let priority = document.getElementById("priority").value;
-    let time = document.getElementById("time").value;
-    
-    if (!subject || !time) { alert("Enter subject and time"); return; }
-
-    // Ask which table to add
-    let tableNames = Object.keys(tablesData);
-    if (tableNames.length === 0) { alert("Create a table first"); return; }
-    let tableName = tableNames[tableNames.length -1]; // default last table (you can change)
-
-    let table = document.getElementById("table-" + tableName);
+    let table = document.getElementById('studyTable');
     let row = table.insertRow();
 
-    let cell1 = row.insertCell(0);
-    let cell2 = row.insertCell(1);
-    let cell3 = row.insertCell(2);
-    let cell4 = row.insertCell(3);
-    let cell5 = row.insertCell(4);
+    let cell0 = row.insertCell(0);
+    let cell1 = row.insertCell(1);
+    let cell2 = row.insertCell(2);
+    let cell3 = row.insertCell(3);
+    let cell4 = row.insertCell(4);
 
-    cell1.innerHTML = day;
-    cell2.innerHTML = subject;
-    cell3.innerHTML = priority;
-    cell4.innerHTML = time;
+    cell0.innerText = day;
+    cell1.innerText = subject;
+    cell2.innerText = priority;
+    cell3.innerText = time;
 
-    // Priority color
+    // Set color based on priority
     let color = priority === "High" ? "#C62828" : priority === "Medium" ? "#EF6C00" : "#2E7D32";
-    [cell1, cell2, cell3, cell4].forEach(c => c.style.color = color);
+    [cell0, cell1, cell2, cell3].forEach(c => c.style.color = color);
 
     // Delete button
     let btn = document.createElement("button");
     btn.innerText = "Delete";
     btn.className = "delete-btn";
-    btn.onclick = function() {
-        row.remove();
-        // remove from localStorage
-        tablesData[tableName] = tablesData[tableName].filter(r => !(r.day===day && r.subject===subject && r.priority===priority && r.time===time));
-        saveToLocalStorage();
-    }
-    cell5.appendChild(btn);
-
-    // Save to localStorage
-    tablesData[tableName].push({day, subject, priority, time});
-    saveToLocalStorage();
+    btn.onclick = () => row.remove();
+    cell4.appendChild(btn);
 
     // Clear inputs
-    document.getElementById("subject").value = "";
-    document.getElementById("time").value = "";
-}
-
-// Save tablesData to localStorage
-function saveToLocalStorage() {
-    localStorage.setItem('tablesData', JSON.stringify(tablesData));
+    document.getElementById('subject').value = '';
+    document.getElementById('time').value = '';
 }
 </script>
 
