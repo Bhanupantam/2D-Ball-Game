@@ -1,1 +1,1 @@
-# 2D-Ball-Game
+# Smart study planner
